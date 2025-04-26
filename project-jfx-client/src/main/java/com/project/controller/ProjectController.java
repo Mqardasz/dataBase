@@ -220,9 +220,10 @@ public class ProjectController {
             logger.info("Ładowanie strony: search4: {}, pageNo: {}, pageSize: {}, offset: {}", search4, pageNo, pageSize, offset);
             final List<Projekt> projektList = new ArrayList<>();
             if (search4 != null && !search4.isEmpty()) {
-                if (search4.matches("[0-9]+")) {
+                if (search4.matches("[0-9]+")) {	// jesli same cyfry
                     Projekt projekt = projektDAO.getProjekt(Integer.parseInt(search4));
                     if (projekt != null) projektList.add(projekt);
+                    projektList.addAll(projektDAO.getProjektyWhereNazwaLike(search4, offset, pageSize));	// jesli nazwa to cyfry
                     logger.info("Wyszukano po ID: {}", projekt != null ? projekt.getProjektId() : "brak");
                 } else if (search4.matches("^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$")) {
                     projektList.addAll(projektDAO.getProjektyWhereDataOddaniaIs(LocalDate.parse(search4, dateFormatter), offset, pageSize));
