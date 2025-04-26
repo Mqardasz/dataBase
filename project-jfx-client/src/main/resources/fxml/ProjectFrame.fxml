@@ -74,7 +74,7 @@
                      <children>
                         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
                            <children>
-                              <Button fx:id="btnPierwsza" mnemonicParsing="false" prefWidth="50.0" text="❙◄">
+                              <Button fx:id="btnPierwsza" mnemonicParsing="false" onAction="#onActionBtnPierwsza" prefWidth="50.0" text="❙◄">
                                  <HBox.margin>
                                     <Insets left="15.0" />
                                  </HBox.margin></Button>
@@ -87,7 +87,7 @@
                         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" GridPane.columnIndex="2">
                            <children>
                               <Button fx:id="btnDalej" mnemonicParsing="false" onAction="#onActionBtnDalej" prefWidth="50.0" text="►" />
-                              <Button fx:id="btnOstatnia" mnemonicParsing="false" prefWidth="50.0" text="►❙">
+                              <Button fx:id="btnOstatnia" mnemonicParsing="false" onAction="#onActionBtnOstatnia" prefWidth="50.0" text="►❙">
                                  <HBox.margin>
                                     <Insets left="10.0" />
                                  </HBox.margin></Button>
