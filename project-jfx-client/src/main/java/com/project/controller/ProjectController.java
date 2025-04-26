@@ -22,7 +22,6 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
-import javafx.util.Callback;
 import javafx.util.StringConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -364,7 +363,7 @@ public class ProjectController {
         Alert confirmation = new Alert(AlertType.CONFIRMATION);
         confirmation.setTitle("Potwierdzenie");
         confirmation.setHeaderText("Usuwanie projektu");
-        confirmation.setContentText("Czy na pewno chcesz usunąć projekt: " + projekt.getNazwa() + "?");
+        confirmation.setContentText("Czy na pewno chcesz usunąć projekt: " + projekt.getNazwa() + "o ID = "+ projekt.getProjektId() + "?");
 
         Optional<ButtonType> result = confirmation.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {

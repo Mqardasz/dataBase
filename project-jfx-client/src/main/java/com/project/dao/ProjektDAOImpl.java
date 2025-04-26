@@ -15,7 +15,7 @@ public class ProjektDAOImpl implements ProjektDAO {
 
 	@Override
 	public Projekt getProjekt(Integer projektId) {
-		String query = "SELECT * FROM projekt WHERE projektId = ?";
+		String query = "SELECT * FROM projekt WHERE projekt_id = ?";
 		try (Connection connect  = DataSource.getConnection();
 				PreparedStatement preparedStmt = connect.prepareStatement(query)) {
 			preparedStmt.setInt(1, projektId);
@@ -29,35 +29,42 @@ public class ProjektDAOImpl implements ProjektDAO {
 			 projekt.setDataCzasUtworzenia(rs.getObject("dataczas_utworzenia", LocalDateTime.class));
 			 projekt.setDataOddania(rs.getObject("data_oddania", LocalDate.class));
 			 return projekt;
-			} else {
-				return null;
 			}
 		}
 	} catch (SQLException e) {
 		throw new RuntimeException(e);
 		}
+		return null;
 	}
 
 	@Override
 	public void setProjekt(Projekt projekt) {
 		boolean isInsert = projekt.getProjektId() == null;
 		String query = isInsert ?
-				"INSERT INTO projekt(nazwa, opis, dataczas_utworzenia, data_oddania) VALUES (?,?,?,?)" :
-				"UPDATE projekt SET nazwa = ?, opis = ?, dataczas_utworzenia = ?, data_oddania = ?"
-					+ " WHERE projekt_id = ?";
+				"INSERT INTO projekt(nazwa, opis, dataczas_utworzenia, data_oddania) VALUES (?, ?, ?, ?)"
+				: "UPDATE projekt SET nazwa = ?, opis = ?, dataczas_utworzenia = ?, data_oddania = ?"
+				+ " WHERE projekt_id = ?";
 		try (Connection connect = DataSource.getConnection();
-			PreparedStatement prepStmt = connect.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-			prepStmt.setString(1,  projekt.getNazwa());
+				PreparedStatement prepStmt = connect.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+			//Wstawianie do zapytania odpowiednich wartości w miejsce znaków '?'
+			prepStmt.setString(1, projekt.getNazwa());
 			prepStmt.setString(2, projekt.getOpis());
 			if(projekt.getDataCzasUtworzenia() == null)
 				projekt.setDataCzasUtworzenia(LocalDateTime.now());
-			prepStmt.setObject(3, projekt.getDataCzasUtworzenia());
+			prepStmt.setObject(3,projekt.getDataCzasUtworzenia());
 			prepStmt.setObject(4, projekt.getDataOddania());
-			if(!isInsert) {
+			if(!isInsert) prepStmt.setInt(5, projekt.getProjektId());
+			//Wysyłanie zapytania i pobieranie danych
+			int liczbaDodanychWierszy = prepStmt.executeUpdate();
+			//Pobieranie kluczy głównych, tylko dla nowo utworzonych projektów
+			if (isInsert && liczbaDodanychWierszy > 0) {
 				ResultSet keys = prepStmt.getGeneratedKeys();
-			keys.close();
+				if (keys.next()) {
+					projekt.setProjektId(keys.getInt(1));
+				}
+				keys.close();
 			}
-		}catch(SQLException e) {
+		} catch(SQLException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -68,6 +75,7 @@ public class ProjektDAOImpl implements ProjektDAO {
 		try (Connection connect = DataSource.getConnection();
 				PreparedStatement prepStmt = connect.prepareStatement(query)) {
 			prepStmt.setInt(1, projektId);
+			prepStmt.executeUpdate();
 		}catch(SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -75,36 +83,35 @@ public class ProjektDAOImpl implements ProjektDAO {
 
 	@Override
 	public List<Projekt> getProjekty(Integer offset, Integer limit) {
-		 List<Projekt> projekty = new ArrayList<>();
-		 String query = "SELECT * FROM projekt ORDER BY dataczas_utworzenia DESC"
-		 + (offset != null ? " OFFSET ?" : "")
-		 + (limit != null ? " LIMIT ?" : "");
-		 try (Connection connect = DataSource.getConnection();
-		 PreparedStatement preparedStmt = connect.prepareStatement(query)) {
-		 int i = 1;
-		 if (offset != null) {
-		 preparedStmt.setInt(i, offset);
-		 i += 1;
-		 }
-		 if (limit != null) {
-		 preparedStmt.setInt(i, limit);
-		 }
-		 try (ResultSet rs = preparedStmt.executeQuery()) {
-		 while (rs.next()) {
-		 Projekt projekt = new Projekt();
-		 projekt.setProjektId(rs.getInt("projekt_id"));
-		 projekt.setNazwa(rs.getString("nazwa"));
-		 projekt.setOpis(rs.getString("opis"));
-		 projekt.setDataCzasUtworzenia(rs.getObject("dataczas_utworzenia", LocalDateTime.class));
-		 projekt.setDataOddania(rs.getObject("data_oddania", LocalDate.class));
-		 projekty.add(projekt);
-		 }
-		 }
-		 }catch(SQLException e) {
-		 throw new RuntimeException(e);
-		 }
-		 return projekty;
-		} 
+	    List<Projekt> projekty = new ArrayList<>();
+	    String query = "SELECT * FROM projekt ORDER BY projekt_id ASC"
+	            + (offset != null ? " OFFSET ?" : "")
+	            + (limit != null ? " LIMIT ?" : "");
+	    try (Connection connect = DataSource.getConnection();
+	         PreparedStatement preparedStmt = connect.prepareStatement(query)) {
+	        int i = 1;
+	        if (offset != null) {
+	            preparedStmt.setInt(i++, offset);
+	        }
+	        if (limit != null) {
+	            preparedStmt.setInt(i, limit);
+	        }
+	        try (ResultSet rs = preparedStmt.executeQuery()) {
+	            while (rs.next()) {
+	                Projekt projekt = new Projekt();
+	                projekt.setProjektId(rs.getInt("projekt_id"));
+	                projekt.setNazwa(rs.getString("nazwa"));
+	                projekt.setOpis(rs.getString("opis"));
+	                projekt.setDataCzasUtworzenia(rs.getObject("dataczas_utworzenia", LocalDateTime.class));
+	                projekt.setDataOddania(rs.getObject("data_oddania", LocalDate.class));
+	                projekty.add(projekt);
+	            }
+	        }
+	    } catch (SQLException e) {
+	        throw new RuntimeException(e);
+	    }
+	    return projekty;
+	}
 
 	@Override
 	public List<Projekt> getProjektyWhereNazwaLike(String nazwa, Integer offset, Integer limit) {
